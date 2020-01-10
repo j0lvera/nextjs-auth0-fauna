@@ -5,7 +5,7 @@ from bottle import request
 from faunadb.client import FaunaClient
 from faunadb import query as q
 from .app import app, faunadb_client
-from .app.utils import jsonify, get_token
+from .app.utils import jsonify
 
 
 @app.post("/api/users")

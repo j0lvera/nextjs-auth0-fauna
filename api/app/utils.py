@@ -13,7 +13,7 @@ from authlib.jose import jwt
 # from authlib.jose.errors import InvalidClaimError
 from six.moves.urllib.request import urlopen
 from bottle import response, request
-from .config import AUTH0_DOMAIN, SECRET, SALT
+from . import AUTH0_DOMAIN, SECRET, SALT
 from . import faunadb_client
 
 # Misc
