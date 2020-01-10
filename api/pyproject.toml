@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "now-auth0-python-nextjs"
+version = "0.1.0"
+description = ""
+authors = ["j0lv3r4 <juan@jolvera.dev>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+bottle = "^0.12.17"
+authlib = "^0.12.1"
+cryptography = "^2.7"
+pylint = "^2.4"
+black = {version = "^18.3-alpha.0", allows-prereleases = true}
+faunadb = "^2.7"
+itsdangerous = "^1.1"
+werkzeug = "^0.16.0"
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
