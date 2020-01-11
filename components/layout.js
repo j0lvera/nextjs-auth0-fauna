@@ -15,9 +15,18 @@ function Layout({ children }) {
         </NextHead>
 
         <nav>
-          <Link href="/api/auth">
-            <a>Login</a>
-          </Link>
+          <ul>
+            <li>
+              <Link href="/api/auth">
+                <a>Login</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/dashboard">
+                <a>Dashboard</a>
+              </Link>
+            </li>
+          </ul>
         </nav>
       </header>
 

@@ -5,8 +5,8 @@ import axios from "axios";
 function getToken(ctx) {
   const { token } = nookies.get(ctx);
 
-  if (!token) {
-    ctx.res.writeHead(302, { Location: "/api/login" });
+  if (ctx.req && !token) {
+    ctx.res.writeHead(302, { Location: "/api/auth" });
     ctx.res.end();
     return;
   }

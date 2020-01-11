@@ -37,8 +37,11 @@ def create_user():
 @app.get("/api/users")
 def get_profile():
     """Returns profile data from a request cookie"""
+
     token = request.get_cookie("token")
     client = FaunaClient(secret=token)
+
     identity = client.query(q.if_(q.has_identity(), q.get(q.identity()), False))
     user = identity["data"]
+
     return jsonify(status_code=200, message={"user": user["email"]})

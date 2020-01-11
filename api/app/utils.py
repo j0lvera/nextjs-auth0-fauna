@@ -4,7 +4,8 @@ import json
 
 # from functools import wraps
 from faunadb import query as q
-from itsdangerous import URLSafeTimedSerializer
+
+# from itsdangerous import URLSafeTimedSerializer
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.backends import default_backend
 from authlib.oidc.core import CodeIDToken
@@ -13,7 +14,7 @@ from authlib.jose import jwt
 # from authlib.jose.errors import InvalidClaimError
 from six.moves.urllib.request import urlopen
 from bottle import response, request
-from . import AUTH0_DOMAIN, SECRET, SALT
+from . import AUTH0_DOMAIN
 from . import faunadb_client
 
 # Misc
@@ -52,7 +53,7 @@ def get_pubkey(auth0_domain):
 
 
 def decode_token(token):
-    """Decode and validates a token"""
+    """Decodes and validates an auth0 token"""
 
     if token is None:
         raise "Token is missing"
@@ -104,16 +105,16 @@ def get_token():
 # Database
 
 
-def generate_timed_signed_token(token):
-    """Add docstring"""
-    serializer = URLSafeTimedSerializer(SECRET)
-    return serializer.dumps(token, salt=SALT)
+# def generate_timed_signed_token(token):
+#     """Add docstring"""
+#     serializer = URLSafeTimedSerializer(SECRET)
+#     return serializer.dumps(token, salt=SALT)
 
 
-def decode_timed_signed_token(token, expiration=3600):
-    """Decodes and verifies a given timed signed token"""
-    serializer = URLSafeTimedSerializer(SECRET)
-    return serializer.loads(token, salt=SALT, max_age=expiration)
+# def decode_timed_signed_token(token, expiration=3600):
+#     """Decodes and verifies a given timed signed token"""
+#     serializer = URLSafeTimedSerializer(SECRET)
+#     return serializer.loads(token, salt=SALT, max_age=expiration)
 
 
 # def get_signed_token():
@@ -130,11 +131,12 @@ def find_ref(index, match_values):
 
 def exchange_jwt_for_secret(auth0_jwt):
     """
-    Generates a user secret from a given auth0 JWT
+    Generates a Fauna token from a given Auth0 JWT
 
     - Decodes the token
     - Extracts the `auth0_id` from the decoded object
-    - Searches for the user in the database generates a token based on the user reference
+    - Searches for the user in the database
+    - Generates a token based on the user reference
     - Returns the token
     """
 

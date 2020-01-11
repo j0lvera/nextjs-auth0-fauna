@@ -4,16 +4,14 @@ import { getToken, fetchUser } from "../utils/auth";
 function Dashboard({ user }) {
   return (
     <Layout>
-      <div>Hello, {user}.</div>
+      <h1>Hello, {user}.</h1>
     </Layout>
   );
 }
 
 Dashboard.getInitialProps = async ctx => {
   const token = getToken(ctx);
-
   const user = await fetchUser(token);
-
   return { user };
 };
 
