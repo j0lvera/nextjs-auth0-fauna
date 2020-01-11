@@ -6,7 +6,7 @@ from bottle import request, response
 from faunadb.client import FaunaClient
 from faunadb import query as q
 from .app import app, faunadb_client, SECRET
-from .app.utils import jsonify, timestamp_verify, timestamp_unsafe_load
+from .app.utils import jsonify, timestamp_verify, timestamp_unsafe_load, logout_user
 
 
 @app.post("/api/users")
@@ -55,13 +55,12 @@ def get_profile():
         encoded_payload = e.payload
         if encoded_payload:
             decoded_payload = timestamp_unsafe_load(encoded_payload, SECRET)
-            client = FaunaClient(secret=decoded_payload)
-            query = client.query(q.logout(True))
-            print("Signature expired. Trying to expire user tokens", query)
+            logged_out = logout_user(decoded_payload)
+            print("Signature expired. Trying to expire user tokens", logged_out)
 
         return jsonify(status_code=401, message="Session expired.")
     except Exception as e:  # pylint: disable=broad-except
-        print(f"Error {e.message} ocurred. Arguments {e.args}.")
+        print(f"Error ocurred.", e)
         return jsonify(status_code=500)
     else:
         identity = client.query(q.if_(q.has_identity(), q.get(q.identity()), False))

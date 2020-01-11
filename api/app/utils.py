@@ -133,6 +133,13 @@ def timestamp_unsafe_load(payload, SECRET: str):
 # FaunaDB
 
 
+def logout_user(token: str) -> bool:
+    """Logs out user tokens."""
+
+    client = FaunaClient(secret=token)
+    return client.query(q.logout(True))
+
+
 def find_ref(index, match_values):
     """Find user reference"""
     return q.select(["ref"], q.get(q.match(q.index(index), match_values)))

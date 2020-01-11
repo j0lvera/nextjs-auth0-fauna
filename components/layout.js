@@ -17,6 +17,11 @@ function Layout({ children }) {
         <nav>
           <ul>
             <li>
+              <Link href="/">
+                <a>Home</a>
+              </Link>
+            </li>
+            <li>
               <Link href="/api/auth">
                 <a>Login</a>
               </Link>
