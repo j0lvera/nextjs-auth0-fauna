@@ -1,11 +1,12 @@
 """Users"""
 
 from datetime import timezone, datetime
-from bottle import request
+from itsdangerous import SignatureExpired
+from bottle import request, response
 from faunadb.client import FaunaClient
 from faunadb import query as q
-from .app import app, faunadb_client
-from .app.utils import jsonify
+from .app import app, faunadb_client, SECRET
+from .app.utils import jsonify, timestamp_verify, timestamp_unsafe_load
 
 
 @app.post("/api/users")
@@ -15,7 +16,7 @@ def create_user():
     print("/api/users json", json)
 
     utcnow = datetime.now(timezone.utc)
-    response = faunadb_client.query(
+    query = faunadb_client.query(
         q.create(
             q.collection("users"),
             {
@@ -30,7 +31,7 @@ def create_user():
         )
     )
 
-    print("response", response)
+    print("response", query)
     return jsonify(status=201, message=f"User created")
 
 
@@ -38,10 +39,32 @@ def create_user():
 def get_profile():
     """Returns profile data from a request cookie"""
 
-    token = request.get_cookie("token")
-    client = FaunaClient(secret=token)
+    try:
+        signed_token = request.get_cookie("token")
 
-    identity = client.query(q.if_(q.has_identity(), q.get(q.identity()), False))
-    user = identity["data"]
+        # Verify signature
+        token = timestamp_verify(signed_token, SECRET, 5)
 
-    return jsonify(status_code=200, message={"user": user["email"]})
+        # Initialize Fauna client
+        client = FaunaClient(secret=token)
+    except SignatureExpired as e:
+        # Remove cookie from headers.
+        response.delete_cookie("token", path="/")
+
+        # Attempt to logout the expired ABAC token.
+        encoded_payload = e.payload
+        if encoded_payload:
+            decoded_payload = timestamp_unsafe_load(encoded_payload, SECRET)
+            client = FaunaClient(secret=decoded_payload)
+            query = client.query(q.logout(True))
+            print("Signature expired. Trying to expire user tokens", query)
+
+        return jsonify(status_code=401, message="Session expired.")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Error {e.message} ocurred. Arguments {e.args}.")
+        return jsonify(status_code=500)
+    else:
+        identity = client.query(q.if_(q.has_identity(), q.get(q.identity()), False))
+        user = identity["data"]
+
+        return jsonify(status_code=200, message={"user": user["email"]})

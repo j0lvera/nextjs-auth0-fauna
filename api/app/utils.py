@@ -4,8 +4,12 @@ import json
 
 # from functools import wraps
 from faunadb import query as q
+from faunadb.client import FaunaClient
 
-# from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import (
+    URLSafeTimedSerializer,
+    SignatureExpired,
+)  # , TimedJSONWebSignatureSerializer
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.backends import default_backend
 from authlib.oidc.core import CodeIDToken
@@ -105,23 +109,28 @@ def get_token():
 # Database
 
 
-# def generate_timed_signed_token(token):
-#     """Add docstring"""
-#     serializer = URLSafeTimedSerializer(SECRET)
-#     return serializer.dumps(token, salt=SALT)
+def timestamp_sign(token: str, SECRET: str) -> str:
+    """Signs token with a timestamp."""
+
+    s = URLSafeTimedSerializer(SECRET)
+    return s.dumps(token)
 
 
-# def decode_timed_signed_token(token, expiration=3600):
-#     """Decodes and verifies a given timed signed token"""
-#     serializer = URLSafeTimedSerializer(SECRET)
-#     return serializer.loads(token, salt=SALT, max_age=expiration)
+def timestamp_verify(signed_token: str, SECRET: str, max_age: int) -> str:
+    """Validates signed token."""
+
+    s = URLSafeTimedSerializer(SECRET)
+    return s.loads(signed_token, max_age=max_age)
 
 
-# def get_signed_token():
-#     """Retreieves token from the request cookie and decodes it"""
-#     token = request.get_cookie("token")
-#     print("token from get_signed_token", token)
-#     return decode_timed_signed_token(token)
+# https://pythonhosted.org/itsdangerous/#responding-to-failure
+def timestamp_unsafe_load(payload, SECRET: str):
+    """Loads unsafe decoded payload."""
+    s = URLSafeTimedSerializer(SECRET)
+    return s.load_payload(payload)
+
+
+# FaunaDB
 
 
 def find_ref(index, match_values):
@@ -131,19 +140,19 @@ def find_ref(index, match_values):
 
 def exchange_jwt_for_secret(auth0_jwt):
     """
-    Generates a Fauna token from a given Auth0 JWT
+    Verifies a provided Auth0 JWT, looks up the user in Fauna by auth0_id,
+    creates an ABAC token and return the token.
 
-    - Decodes the token
-    - Extracts the `auth0_id` from the decoded object
-    - Searches for the user in the database
-    - Generates a token based on the user reference
-    - Returns the token
+    :param auth0_jwt: Auth0 JWT
+    :type auth0_jwt: str
+    :return: An ABAC Fauna token
+    :rtype: str
     """
 
     decoded = decode_token(auth0_jwt)
     auth0_id = decoded["sub"].replace("auth0|", "")
 
-    secret = faunadb_client.query(
+    return faunadb_client.query(
         q.let(
             {
                 "userToken": q.let(
@@ -154,5 +163,3 @@ def exchange_jwt_for_secret(auth0_jwt):
             q.do(q.select(["secret"], q.var("userToken"))),
         )
     )
-
-    return secret
