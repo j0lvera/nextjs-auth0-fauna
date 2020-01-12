@@ -43,7 +43,7 @@ def get_profile():
         signed_token = request.get_cookie("token")
 
         # Verify signature
-        token = timestamp_verify(signed_token, SECRET, 5)
+        token = timestamp_verify(signed_token, SECRET, (60 * 5))
 
         # Initialize Fauna client
         client = FaunaClient(secret=token)

@@ -124,7 +124,7 @@ def timestamp_verify(signed_token: str, SECRET: str, max_age: int) -> str:
 
 
 # https://pythonhosted.org/itsdangerous/#responding-to-failure
-def timestamp_unsafe_load(payload, SECRET: str):
+def timestamp_unsafe_load(payload: str, SECRET: str):
     """Loads unsafe decoded payload."""
     s = URLSafeTimedSerializer(SECRET)
     return s.load_payload(payload)

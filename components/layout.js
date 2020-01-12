@@ -31,6 +31,11 @@ function Layout({ children }) {
                 <a>Dashboard</a>
               </Link>
             </li>
+            <li>
+              <Link href="/api/logout">
+                <a>Logout</a>
+              </Link>
+            </li>
           </ul>
         </nav>
       </header>
