@@ -3,12 +3,14 @@
 import json
 
 # from functools import wraps
+import time
+from bottle import response
 from faunadb import query as q
 from faunadb.client import FaunaClient
 
 from itsdangerous import (
     URLSafeTimedSerializer,
-    SignatureExpired,
+    # SignatureExpired,
 )  # , TimedJSONWebSignatureSerializer
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.backends import default_backend
@@ -17,7 +19,7 @@ from authlib.jose import jwt
 
 # from authlib.jose.errors import InvalidClaimError
 from six.moves.urllib.request import urlopen
-from bottle import response, request
+from bottle import request
 from . import AUTH0_DOMAIN
 from . import faunadb_client
 
@@ -106,9 +108,6 @@ def get_token():
     return decode_token(token)
 
 
-# Database
-
-
 def timestamp_sign(token: str, SECRET: str) -> str:
     """Signs token with a timestamp."""
 
@@ -128,6 +127,17 @@ def timestamp_unsafe_load(payload: str, SECRET: str):
     """Loads unsafe decoded payload."""
     s = URLSafeTimedSerializer(SECRET)
     return s.load_payload(payload)
+
+
+def delete_cookie(cookie_id="token"):
+    """Destroy user's cookie."""
+    response.set_cookie(
+        cookie_id,
+        "",
+        httponly=True,
+        path="/",
+        expires=time.time() - (2 * 3600 * 24 * 365),
+    )
 
 
 # FaunaDB

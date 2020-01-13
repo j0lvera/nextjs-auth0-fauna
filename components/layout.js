@@ -32,6 +32,11 @@ function Layout({ children }) {
               </Link>
             </li>
             <li>
+              <Link href="/profile">
+                <a>Profile</a>
+              </Link>
+            </li>
+            <li>
               <Link href="/api/logout">
                 <a>Logout</a>
               </Link>
@@ -43,7 +48,7 @@ function Layout({ children }) {
       <main>{children}</main>
 
       <footer>
-        Example by <a href="https://twitter.com/_jolvera">@_jolvera</a>
+        <a href="https://twitter.com/_jolvera">@_jolvera</a>
       </footer>
     </>
   );

@@ -1,9 +1,8 @@
 """Endpoint to logout user"""
 
 import time
-from itsdangerous import URLSafeTimedSerializer
 from bottle import response, redirect
-from .app import app, SECRET
+from .app import app
 from .app.utils import jsonify
 
 
@@ -11,7 +10,6 @@ from .app.utils import jsonify
 def logout():
     """Logout user"""
     try:
-
         response.set_cookie(
             "token",
             "",
@@ -19,7 +17,6 @@ def logout():
             path="/",
             expires=time.time() - (2 * 3600 * 24 * 365),
         )
-
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error ocurred.", e)
         return jsonify(status_code=500)

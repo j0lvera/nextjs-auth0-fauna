@@ -1,7 +1,12 @@
-import jwtDecode from "jwt-decode";
 import nookies from "nookies";
-import axios from "axios";
 
+/**
+ * Return token from cookies if it's present, otherwise redirects user to
+ * authentication endpoint (login/signup)
+ *
+ * @param {string} ctx Next's ctx
+ * @returns {string}
+ */
 function getToken(ctx) {
   const { token } = nookies.get(ctx);
 
@@ -14,41 +19,6 @@ function getToken(ctx) {
   return token;
 }
 
-async function fetchUser(token = "") {
-  const isClient = typeof window !== "undefined";
-
-  if (isClient && window.__user) {
-    return window.__user;
-  }
-
-  const headers = token ? { headers: { Cookie: `token=${token}` } } : {};
-  const options = Object.assign({}, { withCredentials: true }, headers);
-
-  console.log("options", options);
-
-  try {
-    const { data, status } = await axios(
-      `${process.env.APP_URL}/api/users`,
-      options
-    );
-
-    console.log("response", data);
-
-    if (status !== 200) {
-      delete window.__user;
-      return null;
-    }
-
-    const json = data.message.user;
-    if (isClient) {
-      window.__user = json;
-    }
-    return json;
-  } catch (error) {
-    // console.log("error while trying fetchUser", error.response);
-  }
-}
-
 const withAuth = WrappedComponent => {
   const Wrapper = props => <WrappedComponent {...props} />;
   Wrapper.getInitialProps = async ctx => {
@@ -58,9 +28,8 @@ const withAuth = WrappedComponent => {
 
     if (typeof window === "undefined") {
       const token = getToken(ctx);
-      const user = jwtDecode(token);
 
-      return { ...componentProps, user };
+      return { ...componentProps, token };
     }
     return { ...componentProps };
   };
@@ -68,4 +37,4 @@ const withAuth = WrappedComponent => {
   return Wrapper;
 };
 
-export { getToken, withAuth, fetchUser };
+export { getToken, withAuth };

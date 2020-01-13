@@ -1,5 +1,6 @@
 import Layout from "../components/layout";
-import { getToken, fetchUser } from "../utils/auth";
+import { getToken } from "../utils/auth";
+import { fetchData } from "../utils/api";
 
 function Dashboard({ user }) {
   return (
@@ -11,8 +12,12 @@ function Dashboard({ user }) {
 
 Dashboard.getInitialProps = async ctx => {
   const token = getToken(ctx);
-  const user = await fetchUser(token);
-  return { user };
+  console.log("token from Next.js getInitialProps", token);
+
+  const { data } = await fetchData(ctx, "/api/users", token);
+  console.log("user from Next.js getInitialProps", data);
+
+  return { user: data.user };
 };
 
 export default Dashboard;
