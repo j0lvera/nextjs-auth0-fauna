@@ -1,7 +1,7 @@
 import NextHead from "next/head";
 import Link from "next/link";
 
-function Layout({ children }) {
+function Layout({ user, loading, children }) {
   return (
     <>
       <header>
@@ -21,26 +21,33 @@ function Layout({ children }) {
                 <a>Home</a>
               </Link>
             </li>
-            <li>
-              <Link href="/api/auth">
-                <a>Login</a>
-              </Link>
-            </li>
-            <li>
-              <Link href="/dashboard">
-                <a>Dashboard</a>
-              </Link>
-            </li>
-            <li>
-              <Link href="/profile">
-                <a>Profile</a>
-              </Link>
-            </li>
-            <li>
-              <Link href="/api/logout">
-                <a>Logout</a>
-              </Link>
-            </li>
+            {user ? (
+              <>
+                <li>
+                  <Link href="/dashboard">
+                    <a>Dashboard</a>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/profile">
+                    <a>Profile</a>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/api/logout">
+                    <a>Logout</a>
+                  </Link>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link href="/api/auth">
+                    <a>Login</a>
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </nav>
       </header>

@@ -1,24 +1,17 @@
 """Endpoint to logout user"""
 
-import time
-from bottle import response, redirect
-from .app import app
-from .app.utils import jsonify
+from bottle import redirect
+from .app import app, APP_URL
+from .app.utils import jsonify, delete_cookie
 
 
 @app.get("/api/logout")
 def logout():
     """Logout user"""
     try:
-        response.set_cookie(
-            "token",
-            "",
-            httponly=True,
-            path="/",
-            expires=time.time() - (2 * 3600 * 24 * 365),
-        )
+        delete_cookie()
     except Exception as e:  # pylint: disable=broad-except
         print(f"Error ocurred.", e)
-        return jsonify(status_code=500)
+        return jsonify(status=500)
     else:
-        return redirect("/")
+        return redirect(APP_URL)

@@ -1,23 +1,15 @@
 import Layout from "../components/layout";
-import { getToken } from "../utils/auth";
-import { fetchData } from "../utils/api";
 import { useFetchUser } from "../utils/user";
 
-function Profile({ user }) {
+function Profile() {
   const { user, loading } = useFetchUser();
 
-  console.log("user from useFetchUser", user, loading);
   return (
-    <Layout>
-      <h1>Hello, {user}.</h1>
+    <Layout user={user.user} loading={loading}>
+      {loading ? "loading..." : <h1>Hello, {user.user}.</h1>}
+      <p>We load data from the client on this page.</p>
     </Layout>
   );
 }
-
-// Dashboard.getInitialProps = async ctx => {
-//   const token = getToken(ctx);
-//   const user = await fetchData("/api/users", token);
-//   return { user };
-// };
 
 export default Profile;

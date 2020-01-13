@@ -13,8 +13,7 @@ async function fetchData(ctx, endpoint = "/", token = "") {
   const reqOptions = Object.assign({}, { withCredentials: true }, headers);
 
   try {
-    const { data, status } = await api.get(endpoint, reqOptions);
-    console.log("data, status from fetchData", data, status);
+    const { data } = await api.get(endpoint, reqOptions);
     return { data };
   } catch (error) {
     console.log("Error while trying to fetch data", error);

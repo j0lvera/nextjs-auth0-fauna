@@ -4,25 +4,36 @@ import { fetchData } from "./api";
 // Code mostly stolen from
 // https://github.com/zeit/next.js/blob/canary/examples/auth0/lib/user.js
 
-async function fetchUser(token = "") {
+async function fetchUser() {
   const isClient = typeof window !== "undefined";
 
   if (isClient && window.__user) {
     return window.__user;
   }
 
-  const { status, data } = await fetchData("/api/user", token);
+  try {
+    const { data } = await fetchData({}, "/api/users");
 
-  if (!status === 200) {
+    if (isClient) {
+      window.__user = data;
+    }
+
+    return data;
+  } catch (error) {
+    if (error.response) {
+      const { status } = error.response;
+
+      if (isClient && status === 401) {
+        delete window.__user;
+        location.href = `${process.env.APP_URL}/api/auth`;
+        return;
+      }
+    }
+
+    console.log("Something went wrong when fetchUser", error);
     delete window.__user;
     return null;
   }
-
-  if (isClient) {
-    window.__user = data;
-  }
-
-  return data;
 }
 
 function useFetchUser({ required } = {}) {
