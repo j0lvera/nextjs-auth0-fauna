@@ -1,11 +1,10 @@
 """
 Module with everything related to the Bottle instance, configuration
-and client sintances.
+and client instances.
 """
 
 import os
 from bottle import Bottle
-from faunadb import query as q
 from faunadb.client import FaunaClient
 from authlib.client import OAuthClient, OAuth2Session
 
