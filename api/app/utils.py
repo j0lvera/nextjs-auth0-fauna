@@ -8,20 +8,19 @@ from bottle import response
 from faunadb import query as q
 from faunadb.client import FaunaClient
 
-from itsdangerous import (
-    URLSafeTimedSerializer,
-    # SignatureExpired,
-)  # , TimedJSONWebSignatureSerializer
+from itsdangerous import URLSafeTimedSerializer
 from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.backends import default_backend
 from authlib.oidc.core import CodeIDToken
 from authlib.jose import jwt
 
 # from authlib.jose.errors import InvalidClaimError
-from six.moves.urllib.request import urlopen
+# from six.moves.urllib.request import urlopen
+from urllib.request import urlopen
 from bottle import request
 from . import AUTH0_DOMAIN
 from . import faunadb_client
+
 
 # Misc
 
@@ -51,6 +50,7 @@ def get_pubkey(auth0_domain):
     """Get public key from a given Auth0 domain"""
 
     jsonurl = urlopen(f"{auth0_domain}/.well-known/jwks.json")
+    print("jsonurl", jsonurl)
     jwks = json.loads(jsonurl.read())
     x5c = jwks["keys"][0]["x5c"][0]
     cert_str = f"-----BEGIN CERTIFICATE-----\n{x5c}\n-----END CERTIFICATE-----\n"
@@ -62,7 +62,7 @@ def decode_token(token):
     """Decodes and validates an auth0 token"""
 
     if token is None:
-        raise "Token is missing"
+        raise Exception("Token is missing")
 
     public_key = get_pubkey(AUTH0_DOMAIN)
     claims_options = {
