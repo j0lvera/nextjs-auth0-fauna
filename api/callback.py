@@ -18,6 +18,8 @@ def callback():
             redirect_uri=f"{APP_URL}/api/callback",
         )
 
+        # If we are to create a new user we should do it here
+
         # Generate a Fauna ABAC token from a given Auth0 JWT
         id_token = token["id_token"]
         secret = exchange_jwt_for_secret(id_token)

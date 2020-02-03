@@ -4,6 +4,7 @@ import json
 
 # from functools import wraps
 import time
+from datetime import datetime, timezone
 from bottle import response
 from faunadb import query as q
 from faunadb.client import FaunaClient
@@ -14,8 +15,6 @@ from cryptography.hazmat.backends import default_backend
 from authlib.oidc.core import CodeIDToken
 from authlib.jose import jwt
 
-# from authlib.jose.errors import InvalidClaimError
-# from six.moves.urllib.request import urlopen
 from urllib.request import urlopen
 from bottle import request
 from . import AUTH0_DOMAIN
@@ -155,28 +154,97 @@ def find_ref(index, match_values):
     return q.select(["ref"], q.get(q.match(q.index(index), match_values)))
 
 
-def exchange_jwt_for_secret(auth0_jwt):
+def faunadb_login(query: object, auth0_id: str) -> object:
+    """
+    Finds a user by auth0_id and creates a FaunaDB ABAC token
+
+    :param query: FaunaDB query object
+    :param auth0_id: Auth0 user id
+    :return: FaunaDB query's result
+    """
+
+    return query.let(
+        {
+            "userToken": q.let(
+                {"userRef": find_ref("users_by_auth0_id", auth0_id)},
+                q.do(q.create(q.tokens(), {"instance": q.var("userRef")})),
+            )
+        },
+        q.do(q.select(["secret"], q.var("userToken"))),
+    )
+
+
+def faunadb_signup(
+    query: object, email: str, auth0_user_id: str, auth0_tenant: str
+) -> str:
+
+    if not all(email, auth0_user_id, auth0_tenant):
+        raise Exception("User data incomplete.")
+
+    utc_now = datetime.now(timezone.utc)
+
+    user_data = {
+        "email": email,
+        "auth0UserId": auth0_user_id,
+        "auth0Tenant": auth0_tenant,
+        "createdBy": utc_now,
+        "updatedBy": utc_now,
+    }
+
+    return query.create(query.collection("users"), {"data": user_data})
+
+
+def exchange_jwt_for_secret(auth0_jwt: str) -> str:
     """
     Verifies a provided Auth0 JWT, looks up the user in Fauna by auth0_id,
     creates an ABAC token and return the token.
 
     :param auth0_jwt: Auth0 JWT
-    :type auth0_jwt: str
     :return: An ABAC Fauna token
-    :rtype: str
+    """
+
+    decoded = decode_token(auth0_jwt)
+    print("decoded", decoded)
+    auth0_id = decoded["sub"].replace("auth0|", "")
+
+    return faunadb_client.query(faunadb_login(q, auth0_id))
+
+
+def user_login_or_signup(auth0_jwt: str) -> str:
+    """
+    Should use this function when the user has successfully logged in or signed
+    up in Auth.
+
+    It will search for the user and return an ABAC token if its found, otherwise
+    it will create a new user and then return an ABAC token.
+
+    :param auth0_jwt: Auth0 JWT
+    :return: An ABAC FaunaDB token
     """
 
     decoded = decode_token(auth0_jwt)
     auth0_id = decoded["sub"].replace("auth0|", "")
+    utc_now = datetime.now(timezone.utc)
+
+    user_data = {
+        "email": json["email"],
+        "auth0UserId": json["auth0UserId"],
+        "auth0Tenant": json["auth0Tenant"],
+        "createdBy": utc_now,
+        "updatedBy": utc_now,
+    }
+
+    is_empty = q.is_empty(q.index("users_by_auth0_id", auth0_id))
+    new_user = q.create(q.collection("users"), {"data": user_data})
+    logged_in = faunadb_login(q, auth0_id)
 
     return faunadb_client.query(
-        q.let(
-            {
-                "userToken": q.let(
-                    {"userRef": find_ref("users_by_auth0_id", auth0_id)},
-                    q.do(q.create(q.tokens(), {"instance": q.var("userRef")})),
-                )
-            },
-            q.do(q.select(["secret"], q.var("userToken"))),
+        q.if_(
+            # Conditional expression
+            is_empty,
+            # True
+            new_user,
+            # False
+            logged_in,
         )
     )
