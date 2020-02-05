@@ -25,3 +25,5 @@ yarn-error.log*
 api/.venv
 
 .now
+api/app/__pycache__
+api/__pycache__
