@@ -15,33 +15,6 @@ from .app.utils import (
     delete_cookie,
 )
 
-
-@app.post("/api/users")
-def create_user():
-    """Creates user in the database"""
-    json = request.json
-    print("/api/users json", json)
-
-    utcnow = datetime.now(timezone.utc)
-    query = faunadb_client.query(
-        q.create(
-            q.collection("users"),
-            {
-                "data": {
-                    "email": json["email"],
-                    "auth0UserId": json["auth0UserId"],
-                    "auth0Tenant": json["auth0Tenant"],
-                    "createdBy": utcnow,
-                    "updatedBy": utcnow,
-                }
-            },
-        )
-    )
-
-    print("response", query)
-    return jsonify(status=201, message="User created.")
-
-
 @app.get("/api/users")
 def get_profile():
     """Returns profile data from a request cookie"""
