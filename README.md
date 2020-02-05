@@ -62,18 +62,17 @@ Fill the values in both `.env` and `.env.build` files with the following:
 
 - The FaunaDB server key.
 - The Auth0 Client ID, Client Secret and Auth0 domain.
-- The URL that ngrok gives us. Keep in mind that ngrok will give us a new URL every time we use start it.
 
 Your files should look like below.
 
 ```
 SECRET=a secret!
 SALT=salty
-FAUNADB_SERVER_KEY=YMyGXF2PGfRl0sSS7-fnADhxWfvIACEmmZUpRdD29q4bWLq4UP
-AUTH0_CLIENT_ID=tuXA7ldwyrCNCXC8tuXA7ldwyrCNCXC8
-AUTH0_CLIENT_SECRET=x5qjKZdW-ffiQjLeY7x5qjKZdW-ffiQjLeY7
-AUTH0_DOMAIN=https://babyyoda.auth0.com
-APP_URL=https://random-url.ngrok.io
+FAUNADB_SERVER_KEY=your fauna server key
+AUTH0_CLIENT_ID=your auth0 client id
+AUTH0_CLIENT_SECRET=your auth0 client secret
+AUTH0_DOMAIN=https://your-auth0-domain.auth0.com
+APP_URL=http://localhost:3000
 DEBUG=True
 ```
 
@@ -96,5 +95,6 @@ $ poetry install
 Inside the root project folder we run our local server.
 
 ```
-$ now dev
+$ now dev --listen 3000
+> Ready! Available at http://localhost:3000
 ```
