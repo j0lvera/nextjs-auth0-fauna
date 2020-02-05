@@ -1,7 +1,8 @@
+import React from "react";
 import NextHead from "next/head";
 import Link from "next/link";
 
-function Layout({ user, loading, children }) {
+function Layout({ user, children }) {
   return (
     <>
       <header>

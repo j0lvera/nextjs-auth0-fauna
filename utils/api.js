@@ -14,6 +14,7 @@ async function fetchData(ctx, endpoint = "/", token = "") {
 
   try {
     const { data } = await api.get(endpoint, reqOptions);
+    console.log('data', data);
     return { data };
   } catch (error) {
     console.log("Error while trying to fetch data", error);

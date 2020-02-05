@@ -23,3 +23,5 @@ yarn-error.log*
 
 .idea
 api/.venv
+
+.now

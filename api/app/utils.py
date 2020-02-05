@@ -107,24 +107,24 @@ def get_token():
     return decode_token(token)
 
 
-def timestamp_sign(token: str, SECRET: str) -> str:
+def timestamp_sign(token: str, secret: str) -> str:
     """Signs token with a timestamp."""
 
-    s = URLSafeTimedSerializer(SECRET)
+    s = URLSafeTimedSerializer(secret)
     return s.dumps(token)
 
 
-def timestamp_verify(signed_token: str, SECRET: str, max_age: int) -> str:
+def timestamp_verify(signed_token: str, secret: str, max_age: int) -> str:
     """Validates signed token."""
 
-    s = URLSafeTimedSerializer(SECRET)
+    s = URLSafeTimedSerializer(secret)
     return s.loads(signed_token, max_age=max_age)
 
 
 # https://pythonhosted.org/itsdangerous/#responding-to-failure
-def timestamp_unsafe_load(payload: str, SECRET: str):
+def timestamp_unsafe_load(payload: str, secret: str):
     """Loads unsafe decoded payload."""
-    s = URLSafeTimedSerializer(SECRET)
+    s = URLSafeTimedSerializer(secret)
     return s.load_payload(payload)
 
 
@@ -149,24 +149,23 @@ def logout_user(token: str) -> bool:
     return client.query(q.logout(True))
 
 
-def find_ref(index, match_values):
+def find_ref(index: str, match_values: str) -> object:
     """Find user reference"""
     return q.select(["ref"], q.get(q.match(q.index(index), match_values)))
 
 
-def faunadb_login(query: object, auth0_id: str) -> object:
+def faunadb_login(ref):
     """
-    Finds a user by auth0_id and creates a FaunaDB ABAC token
+    Creates an ABAC token from a given Auth0 user id or Faunadb reference object
 
-    :param query: FaunaDB query object
-    :param auth0_id: Auth0 user id
+    :param ref: FaunaDB ref object
     :return: FaunaDB query's result
     """
 
-    return query.let(
+    return q.let(
         {
             "userToken": q.let(
-                {"userRef": find_ref("users_by_auth0_id", auth0_id)},
+                {"userRef": ref},
                 q.do(q.create(q.tokens(), {"instance": q.var("userRef")})),
             )
         },
@@ -174,46 +173,23 @@ def faunadb_login(query: object, auth0_id: str) -> object:
     )
 
 
-def faunadb_signup(
-    query: object, email: str, auth0_user_id: str, auth0_tenant: str
-) -> str:
-
-    if not all(email, auth0_user_id, auth0_tenant):
-        raise Exception("User data incomplete.")
-
+def faunadb_create_user(email: str, auth0_user_id: str) -> object:
     utc_now = datetime.now(timezone.utc)
 
     user_data = {
         "email": email,
         "auth0UserId": auth0_user_id,
-        "auth0Tenant": auth0_tenant,
         "createdBy": utc_now,
         "updatedBy": utc_now,
     }
 
-    return query.create(query.collection("users"), {"data": user_data})
-
-
-def exchange_jwt_for_secret(auth0_jwt: str) -> str:
-    """
-    Verifies a provided Auth0 JWT, looks up the user in Fauna by auth0_id,
-    creates an ABAC token and return the token.
-
-    :param auth0_jwt: Auth0 JWT
-    :return: An ABAC Fauna token
-    """
-
-    decoded = decode_token(auth0_jwt)
-    print("decoded", decoded)
-    auth0_id = decoded["sub"].replace("auth0|", "")
-
-    return faunadb_client.query(faunadb_login(q, auth0_id))
+    return q.create(q.collection("users"), {"data": user_data})
 
 
 def user_login_or_signup(auth0_jwt: str) -> str:
     """
     Should use this function when the user has successfully logged in or signed
-    up in Auth.
+    up in Auth0.
 
     It will search for the user and return an ABAC token if its found, otherwise
     it will create a new user and then return an ABAC token.
@@ -223,28 +199,26 @@ def user_login_or_signup(auth0_jwt: str) -> str:
     """
 
     decoded = decode_token(auth0_jwt)
-    auth0_id = decoded["sub"].replace("auth0|", "")
-    utc_now = datetime.now(timezone.utc)
-
-    user_data = {
-        "email": json["email"],
-        "auth0UserId": json["auth0UserId"],
-        "auth0Tenant": json["auth0Tenant"],
-        "createdBy": utc_now,
-        "updatedBy": utc_now,
-    }
-
-    is_empty = q.is_empty(q.index("users_by_auth0_id", auth0_id))
-    new_user = q.create(q.collection("users"), {"data": user_data})
-    logged_in = faunadb_login(q, auth0_id)
+    email = decoded["email"]
+    auth0_user_id = decoded["sub"].replace("auth0|", "")
 
     return faunadb_client.query(
-        q.if_(
+        q.if_expr(
             # Conditional expression
-            is_empty,
+            q.is_empty(q.match(q.index("users_by_auth0_id"), auth0_user_id)),
             # True
-            new_user,
+            q.let(
+                {
+                    "userRef": q.select(
+                        ["ref"], faunadb_create_user(email, auth0_user_id)
+                    )
+                },
+                q.do(faunadb_login(q.var("userRef"))),
+            ),
             # False
-            logged_in,
+            q.let(
+                {"userRef": find_ref("users_by_auth0_id", auth0_user_id)},
+                q.do(faunadb_login(q.var("userRef"))),
+            ),
         )
     )

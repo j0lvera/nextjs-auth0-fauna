@@ -1,5 +1,7 @@
+import React from "react";
 import Layout from "../components/layout";
 import { getToken } from "../utils/auth";
+// import { auth } from "next-authentication";
 import { fetchData } from "../utils/api";
 
 function Dashboard({ user }) {
@@ -17,6 +19,7 @@ function Dashboard({ user }) {
 
 Dashboard.getInitialProps = async ctx => {
   const token = getToken(ctx);
+  // const token = auth({ context });
   console.log("token from Next.js getInitialProps", token);
 
   const { data } = await fetchData(ctx, "/api/users", token);

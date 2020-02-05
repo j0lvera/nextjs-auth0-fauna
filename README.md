@@ -48,20 +48,6 @@ The example uses the the API-frontend architecture that [ZEIT recommends](https:
   - Click in the "Settings" tab and
   - Copy the Domain, Client ID and Client Secret.
 
-#### ~~Post-User-registration hook (Optional)~~
-
-~~In case we want to keep a copy of the user data in our database, we need to setup a [Post-User-Registration hook in Auth0](https://auth0.com/docs/hooks/guides/use-the-post-user-registration-extensibility-point). The hook will send a POST request to our API with the Auth0's `userId`. Then, we save the information in our database in case we need to build relations with other tables.~~
-
-#### Ngrok setup
-
-[Install ngrok the instructions from their website](https://ngrok.com/product). We will use ngrok to expose our local server so that Auth0 can reach it with a [Hook](https://auth0.com/docs/hooks) we will setup.
-
-Run ngrok in our port 3000.
-
-```
-ngrok http 3000
-```
-
 ### Installing
 
 Clone the repository.
